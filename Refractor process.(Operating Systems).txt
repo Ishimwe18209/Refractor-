@@ -1,0 +1,85 @@
+
+
+#include <iostream>
+#include <cstdio>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/uio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+
+int VsFunction(char *filename, int sleeptime){
+  struct stat myfinfo; /* actual structure */
+  
+    if (stat(filename, &myfinfo)) { /* error checking return value of stat() */
+
+      printf("Cannot stat the file \"%s\". Exiting.\n", filename);
+      return(-1); /* exiting with a non-zero return code means "error" */
+
+    } else {
+	printf("The input file was: \"%s\" with size %ld bytes\n",filename, myfinfo.st_size);
+	  // define filestring
+
+	int buffersize = 1024; // handle lines up to 1024 chars before newline.
+	char filestring[buffersize];
+	FILE *fptr;
+
+	//open a file
+	fptr = fopen(filename, "r");
+	if (NULL == fptr) {
+	  printf("failed to open filename \"%s\"\n",filename);
+	  return(-1);
+	}
+	printf("Reading contents of filename:\n");
+	
+	while (!feof(fptr) && (fgets(filestring, buffersize, fptr) != NULL )) { // @suppress("Invalid arguments")
+	  printf("%s",filestring);
+	  if (sleeptime)
+	    usleep(sleeptime*1000000); // @suppress("Invalid arguments")
+	  
+	}
+
+	fclose(fptr);
+    }
+    
+ return(0);
+} //end Vsfunction()
+
+int main(int argc, char **argv)
+{
+
+  // declare variables
+
+  char *filename;
+  bool flag = 0;
+  float sleeptime = 0.0;
+
+  char usage[]="use -h for help\n";
+  
+  if (argc > 1 ) {   char myopt;
+	while ((myopt = getopt (argc, argv, "d:h")) != -1)
+	  switch (myopt) {
+	  case 'd': /* if option is -d, grab argument from optarg */
+	    sleeptime = atof(optarg); /* parse to float (no error checking...) */
+	    /* break; don't want to break, that would wreck the while() */
+	    break;
+	  case 'h':
+	    printf("usage: %s [-h] -d float_seconds filename\n", argv[0]);
+	    exit(0); /* not really an error */
+	    break;
+	  }
+  }	else { // No arguments
+    printf("%s",usage);
+    exit(0);
+  }
+	for (int i=optind; i<argc; i++){
+	  printf("about to attempt argv %d, \"%s\"\n",i,argv[i]);
+	  int result = VsFunction(argv[i], sleeptime);
+	  printf("result from file %s: %d\n",argv[i],result);
+  
+  }
+
+
+}//end main
